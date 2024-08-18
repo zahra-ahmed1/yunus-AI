@@ -88,6 +88,8 @@ class _ChatPageState extends State<ChatPage> {
     return match != null ? match.group(0)! : '';
   }
 
+  
+
   void _addMessage(types.Message message) {
     setState(() {
       _messages.insert(0, message);
@@ -253,6 +255,7 @@ class _ChatPageState extends State<ChatPage> {
   setState(() {
     isDataLoading = true;
   });
+
 
   String responseText;
 
