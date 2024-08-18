@@ -229,7 +229,7 @@ class _ChatPageState extends State<ChatPage> {
 
   String responseText;
 
-  if (message.text.startsWith('stock price for')) {
+  if (message.text.toLowerCase().contains('stock price for')) {
     final symbol = message.text.replaceFirst('stock price for', '').trim();
     try {
       responseText = await alphaVantageService.getStockQuote(symbol); // Fetch stock price
