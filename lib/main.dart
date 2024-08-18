@@ -61,6 +61,33 @@ class _ChatPageState extends State<ChatPage> {
     _loadMessages();
   }
 
+  // function for generating startup advice
+  String _generateStartupAdvice(String businessStage, String fundingGoal) {
+    if (businessStage == 'seed') {
+      return 'At the seed stage, focus on building an MVP and pitching to angel investors. Consider small-scale crowdfunding as well.';
+    } else if (businessStage == 'growth') {
+      return 'At the growth stage, consider scaling through venture capital funding or strategic partnerships.';
+    }
+    return 'Tell me more about your business stage to provide personalized advice.';
+  }
+
+  // Function to extract business stage from user input
+  String _extractBusinessStage(String text) {
+    if (text.toLowerCase().contains('seed')) {
+      return 'seed';
+    } else if (text.toLowerCase().contains('growth')) {
+      return 'growth';
+    }
+    return '';
+  }
+
+  // Function to extract funding goal from user input
+  String _extractFundingGoal(String text) {
+    RegExp fundingRegExp = RegExp(r'\b\d+\b'); // Simple regex to match digits
+    final match = fundingRegExp.firstMatch(text);
+    return match != null ? match.group(0)! : '';
+  }
+
   void _addMessage(types.Message message) {
     setState(() {
       _messages.insert(0, message);
