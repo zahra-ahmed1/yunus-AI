@@ -15,6 +15,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import 'openai_service.dart';
+import 'alpha_vantage_service.dart';
+
 
 void main() {
   initializeDateFormatting().then((_) => runApp(const MyApp()));
@@ -51,6 +53,7 @@ class _ChatPageState extends State<ChatPage> {
 
   bool isDataLoading = false;
   final OpenAIService openAIService = OpenAIService();
+  final AlphaVantageService alphaVantageService = AlphaVantageService();
 
   @override
   void initState() {
@@ -213,34 +216,46 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _handleSendPressed(types.PartialText message) async {
-    final textMessage = types.TextMessage(
-      author: _user,
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      id: const Uuid().v4(),
-      text: message.text,
-    );
+  final textMessage = types.TextMessage(
+    author: _user,
+    createdAt: DateTime.now().millisecondsSinceEpoch,
+    id: const Uuid().v4(),
+    text: message.text,
+  );
 
-    // ignore: todo
-    // TODO: Use the PALM API and OPENAI API and pass the message
-    setState(() {
-      isDataLoading = true;
-    });
-    final aiResponse = await openAIService.chatGPTAPI(message.text);
+  setState(() {
+    isDataLoading = true;
+  });
 
-    final botMessage = types.TextMessage(
-      author: _bot,
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      id: const Uuid().v4(),
-      text: aiResponse,
-    );
+  String responseText;
 
-    _addMessage(textMessage);
-
-    setState(() {
-      isDataLoading = false;
-    });
-    _addMessage(botMessage); //add bot message
+  if (message.text.startsWith('stock price for')) {
+    final symbol = message.text.replaceFirst('stock price for', '').trim();
+    try {
+      responseText = await alphaVantageService.getStockQuote(symbol); // Fetch stock price
+    } catch (e) {
+      responseText = 'Error fetching stock price: $e';
+    }
+  } else {
+    final aiResponse = await openAIService.chatGPTAPI(message.text); // Get AI response for other queries
+    responseText = aiResponse;
   }
+
+  final botMessage = types.TextMessage(
+    author: _bot,
+    createdAt: DateTime.now().millisecondsSinceEpoch,
+    id: const Uuid().v4(),
+    text: responseText,
+  );
+
+  _addMessage(textMessage);
+
+  setState(() {
+    isDataLoading = false;
+  });
+  _addMessage(botMessage); // Add bot message
+}
+
 
   void _loadMessages() async {
     final response = await rootBundle.loadString('assets/messages.json');
@@ -257,6 +272,7 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) => Scaffold(
         body: Chat(
           messages: _messages,
+
           onAttachmentPressed: _handleAttachmentPressed,
           onMessageTap: _handleMessageTap,
           onPreviewDataFetched: _handlePreviewDataFetched,
